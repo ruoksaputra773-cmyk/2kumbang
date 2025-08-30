@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>2 Kumbang — WARNING</title>
+<style>
+  :root{
+    --red:#ff1a1a;
+    --lime:#00ff6a;
+    --blue:#0066ff;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:monospace;background:#000;overflow:hidden}
+
+  /* MATRIX BACKGROUND */
+  canvas#matrix{
+    position:fixed; inset:0; width:100vw; height:100vh; z-index:0; background:#000;
+  }
+
+  /* FLASH WHITE */
+  #flash{
+    position:fixed; inset:0; background:#fff; opacity:0; z-index:4; pointer-events:none;
+    transition:opacity .12s ease;
+  }
+
+  /* CRACK OVERLAY */
+  #crack{
+    position:fixed; inset:0; z-index:5; display:none; pointer-events:none;
+    background:url('https://i.ibb.co/dk3VfJt/screen-crack.png') center/cover no-repeat;
+    filter:contrast(1.1) brightness(1.1);
+  }
+
+  /* POPUP CONTENT */
+  #popup{
+    position:fixed; inset:0; z-index:3;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:2rem;
+    background:linear-gradient(180deg, rgba(0,0,0,.85), rgba(0,0,0,.92));
+    backdrop-filter:blur(2px);
+    color:#fff;
+    animation:fadeIn .3s ease both;
+  }
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+  .headline{
+    font-size:clamp(2.5rem, 7vw, 6.5rem);
+    color:var(--red);
+    text-shadow:0 0 20px rgba(255,0,0,.9), 0 0 45px rgba(255,0,0,.6);
+    letter-spacing:.04em;
+    margin:0 0 .2em 0;
+    animation:flicker .08s infinite;
+  }
+  @keyframes flicker{
+    0%,100%{opacity:1; filter:drop-shadow(0 0 10px #f00)}
+    50%{opacity:.7}
+  }
+
+  .sub{
+    font-size:clamp(1.3rem, 3.5vw, 2.4rem);
+    margin:.2em 0 .6em;
+  }
+
+  .timer{
+    font-size:clamp(2.2rem, 6vw, 5rem);
+    font-weight:900;
+    color:#fff;
+    text-shadow:0 0 14px #fff, 0 0 30px #f00;
+    margin:.1em 0 .5em;
+  }
+
+  /* BIG COUNTDOWN CIRCLE */
+  .dial{
+    width:min(45vw, 320px);
+    height:min(45vw, 320px);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(closest-side, rgba(0,0,0,.7), rgba(0,0,0,.95)),
+               conic-gradient(var(--lime) 0deg, var(--lime) 0deg, #222 0deg);
+    outline:6px solid #111; box-shadow:0 0 25px rgba(0,255,102,.35), inset 0 0 40px #000;
+    margin:.4em auto .6em;
+    transition:filter .2s ease;
+    animation:pulse 1.2s infinite;
+  }
+  .dial span{
+    font-size:clamp(2.2rem, 7vw, 5.2rem);
+    font-weight:900; color:#fff; text-shadow:0 0 16px rgba(255,255,255,.9);
+  }
+  @keyframes pulse{
+    0%{transform:scale(1)}
+    50%{transform:scale(1.04)}
+    100%{transform:scale(1)}
+  }
+
+  .label{
+    font-size:clamp(1.1rem, 3vw, 2rem);
+    margin:.2em 0 1em;
+    color:#ffefef;
+  }
+
+  /* INPUT & BUTTON GIANT */
+  .controls{
+    display:flex; gap:.6rem; flex-wrap:wrap; align-items:center; justify-content:center;
+    margin-top:.4em;
+  }
+  input#kode{
+    font-size:clamp(1.6rem, 4.5vw, 2.6rem);
+    padding:.4em .6em; border:3px solid #400; border-radius:12px;
+    background:#120000; color:#fff; min-width:min(70vw, 520px);
+    text-align:center; letter-spacing:.08em; box-shadow:0 0 18px rgba(255,0,0,.3) inset;
+  }
+  button#kirim{
+    font-size:clamp(1.6rem, 4.5vw, 2.6rem);
+    padding:.5em .9em; border:none; border-radius:12px; cursor:pointer;
+    background:linear-gradient(180deg, #b40000, #5a0000);
+    color:#fff; box-shadow:0 0 22px rgba(255,0,0,.55);
+    transition:transform .05s ease;
+  }
+  button#kirim:active{ transform:scale(.98) }
+
+  .status{
+    margin-top:.4em;
+    font-size:clamp(1.8rem, 5vw, 3.4rem);
+    font-weight:800;
+    text-shadow:0 0 16px currentColor;
+    min-height:1.4em;
+  }
+
+  /* SHAKES & GLITCH */
+  .shake{ animation:shake .18s infinite }
+  @keyframes shake{
+    0%{transform:translate(0,0)} 25%{transform:translate(6px,-6px)}
+    50%{transform:translate(-6px,6px)} 75%{transform:translate(6px,6px)}
+    100%{transform:translate(-6px,-6px)}
+  }
+  .glitch{ animation:glitch 0.15s infinite }
+  @keyframes glitch{
+    0%{text-shadow:3px 0 #f00, -3px 0 #0ff}
+    50%{text-shadow:-3px -2px #f00, 3px 2px #0ff}
+    100%{text-shadow:3px 2px #f00, -3px -2px #0ff}
+  }
+
+  /* BOTTOM NOTE */
+  .foot{
+    position:fixed; bottom:.6rem; left:0; right:0; text-align:center;
+    color:#bbb; font-size:.9rem; z-index:2; opacity:.7;
+  }
+
+  /* helper hidden for “data dicuri” moment */
+  .hidden{display:none}
+</style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div id="popup">
+  <div class="headline glitch">!!! PERINGATAN SISTEM !!!</div>
+  <div class="sub">Masukkan <b>KODE KEAMANAN</b> dalam waktu:</div>
+  <div class="timer" id="timer">24:00:00</div>
+
+  <div class="dial" id="dial"><span id="dialNum">3</span></div>
+  <div class="label">Jika gagal, perangkat akan diRESET ke setelan pabrik.</div>
+
+  <div class="controls">
+    <input id="kode" placeholder="KETIK KODE DI SINI (contoh: 2KUMBANG)" />
+    <button id="kirim">KIRIM</button>
+  </div>
+
+  <div class="status" id="status">&nbsp;</div>
+</div>
+
+<div id="flash"></div>
+<div id="crack"></div>
+
+<!-- AUDIO (main volume diatur via JS) -->
+<audio id="alarm" src="https://www.myinstants.com/media/sounds/nuclear-alarm-sound-effect.mp3" loop></audio>
+<audio id="laugh" src="https://www.myinstants.com/media/sounds/evil-laugh.mp3"></audio>
+<audio id="laugh2" src="https://www.myinstants.com/media/sounds/evil-laugh-1.mp3"></audio>
+
+<div class="foot">(Simulasi/prank visual saja — tidak ada aksi nyata.)</div>
+
+<script>
+/* ===== MATRIX RAIN ===== */
+const cvs = document.getElementById('matrix'), ctx = cvs.getContext('2d');
+function sizeCanvas(){ cvs.width = innerWidth; cvs.height = innerHeight; }
+sizeCanvas(); addEventListener('resize', sizeCanvas);
+const letters = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&*@".split("");
+let fontSize = 16, columns, drops;
+function initMatrix(){
+  fontSize = Math.max(14, Math.floor(innerWidth/80));
+  columns = Math.floor(cvs.width / fontSize);
+  drops = new Array(columns).fill(1);
+}
+initMatrix();
+function drawMatrix(){
+  ctx.fillStyle = "rgba(0,0,0,0.06)";
+  ctx.fillRect(0,0,cvs.width,cvs.height);
+  ctx.fillStyle = "#0f0";
+  ctx.font = fontSize + "px monospace";
+  for(let i=0;i<drops.length;i++){
+    const text = letters[Math.floor(Math.random()*letters.length)];
+    ctx.fillText(text, i*fontSize, drops[i]*fontSize);
+    if(drops[i]*fontSize > cvs.height && Math.random() > 0.975) drops[i]=0;
+    drops[i]++;
+  }
+}
+setInterval(drawMatrix, 33);
+addEventListener('resize', initMatrix);
+
+/* ===== AUDIO CONTROL (must after first interaction) ===== */
+const alarm = document.getElementById('alarm');
+const laugh = document.getElementById('laugh');
+const laugh2 = document.getElementById('laugh2');
+
+let audioArmed = false;
+function armAudio(){
+  if(audioArmed) return;
+  audioArmed = true;
+  alarm.volume = 0.55; laugh.volume = 0.85; laugh2.volume = 0.95;
+  alarm.play().catch(()=>{});
+  setTimeout(()=>laugh.play().catch(()=>{}), 900); // tawa awal
+}
+document.addEventListener('click', armAudio, {once:true});
+document.addEventListener('keydown', armAudio, {once:true});
+
+/* ===== COUNTDOWN 24:00:00 (visual only) ===== */
+let h=24, m=0, s=0;
+const timerEl = document.getElementById('timer');
+const statusEl = document.getElementById('status');
+const dial = document.getElementById('dial');
+const dialNum = document.getElementById('dialNum');
+const flash = document.getElementById('flash');
+const crack = document.getElementById('crack');
+
+function pad(n){return String(n).padStart(2,'0')}
+function updateTimer(){
+  if(s===0){ if(m===0){ if(h===0){ return; } h--; m=59; s=59; } else { m--; s=59; } }
+  else s--;
+  timerEl.textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+const timerInt = setInterval(updateTimer, 1000);
+
+/* ===== BIG DIAL mini-count (3-2-1 loop panic) ===== */
+let mini = 3;
+function updateDial(){
+  mini--;
+  if(mini<=0){
+    // flash & shake every cycle end
+    mini = 3;
+    burstFlash();
+    popup.classList.add('shake');
+    setTimeout(()=>popup.classList.remove('shake'), 350);
+    // occasionally drop crack overlay
+    if(Math.random()>.6){ crack.style.display='block'; setTimeout(()=>crack.style.display='none', 900); }
+    // random extra evil laugh
+    if(Math.random()>.65){ laugh2.currentTime=0; laugh2.play().catch(()=>{}); }
+  }
+  dialNum.textContent = mini;
+  // dial ring progress + color shift
+  const prog = (3-mini)/3; // 0..1
+  const deg = Math.floor(prog*360);
+  const col = mini===3 ? 'var(--lime)' : mini===2 ? 'orange' : 'var(--red)';
+  dial.style.background = `radial-gradient(closest-side, rgba(0,0,0,.7), rgba(0,0,0,.95)),
+                           conic-gradient(${col} ${deg}deg, #222 ${deg}deg)`;
+}
+setInterval(updateDial, 1000);
+
+/* ===== FLASH EFFECT ===== */
+function burstFlash(times=3, gap=220){
+  let i=0;
+  const run = ()=> {
+    flash.style.opacity = 1;
+    setTimeout(()=>{ flash.style.opacity = 0; }, 120);
+    i++; if(i<times) setTimeout(run, gap);
+  };
+  run();
+}
+
+/* ===== CODE CHECK ===== */
+const popup = document.getElementById('popup');
+const input = document.getElementById('kode');
+const btn = document.getElementById('kirim');
+
+function wrong(){
+  statusEl.style.color = 'var(--red)';
+  statusEl.textContent = 'KODE SALAH! DATA DIAMBIL!';
+  statusEl.classList.add('glitch');
+  burstFlash(4,180);
+  crack.style.display='block';
+  laugh2.currentTime=0; laugh2.play().catch(()=>{});
+  setTimeout(()=>statusEl.classList.remove('glitch'), 1400);
+  setTimeout(()=>crack.style.display='none', 1200);
+}
+function success(){
+  clearInterval(timerInt);
+  statusEl.style.color = 'var(--lime)';
+  statusEl.textContent = 'SISTEM DIBATALKAN — 2 KUMBANG';
+  alarm.pause(); alarm.currentTime=0;
+  // one last soft laugh fade
+  laugh.volume = 0.4; setTimeout(()=>{ laugh.pause(); }, 800);
+  popup.classList.remove('shake');
+  burstFlash(1,120);
+}
+
+function submitCode(){
+  const val = (input.value||'').trim().toUpperCase();
+  if(val === '2KUMBANG') success(); else wrong();
+  input.focus(); input.select();
+}
+btn.addEventListener('click', submitCode);
+input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') submitCode(); });
+
+/* Optional: auto-focus input for instant typing */
+setTimeout(()=>input.focus(), 300);
+</script>
+</body>
+  </html>
